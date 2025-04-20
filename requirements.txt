@@ -1,6 +1,7 @@
 streamlit
 pdf2docx
-dropboxmammoth
+dropbox
+mammoth
 weasyprint
-python-docx
+
 
