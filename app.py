@@ -1,11 +1,12 @@
 import streamlit as st
 from pdf2docx import Converter
-import pypandoc
+from docx2pdf import convert
 import os
 import dropbox
 
 # === CONFIG ===
-DROPBOX_ACCESS_TOKEN = os.getenv("sl.u.AFrYaE5UWF9QUvUfmc6FIj7AY1-Mjlg1xXCHYzhNPCyQEn5_Av5ewd8honxAdaNTpQ5l5wvYxVJTxFUPqeep8CnV3Cyml8v234NviQnF_M5JJGh7hGs_CjHmg9yTNzcKHH0QEQogL6RdNOqS8UY1zxPhBNAzbAv6Q6xTF-6lBwlaRIZX_QCLZ5_NQihYnc-FlfZTCsU7CFNzs_GSLSkyc5mEFqi_eQ0USbgm0fDYKWl6CMi0W7MpzL00JE7tUihF4hk1xrGb5N-H4CCfu9X6jvN3YBcVDx8l8NUDpTJM7mCqfLBFdjHEDsCt8bPyGrgHsnvVUzQnDO7EpSR5T3HyPDt9UfY8HXmeFJYC96UhLcR-LKdpMqPp_Ae-bZOUOgTbxDC6W5p_L0I-PTsmcMSEdsz4LpAFI_b0lBhWby9jh69FK2w2iRtaYSZQZlygClwr29oTWYNsxdLSAsgAAca6cUsvoX-0eZ3TRd0T9XqZ5o1NAAVeGQUSWohB-3120HkwxB5RQGoBKUebZEWDegznA3sf_WsecJ0CvrpEzROUeYj9Y_vs3gDTdQR-jKHTEVCnoIoqcBTkBKcyd8kH8xEF4e2fuRqcnf-qJbMQvFojb2Xi3wU9LByQsSBYySeD_pI1opfB-f1PCoXhtXpa1sSudo6znwh_P5s70EXKZd5bCnRFr8_vbKHvnLBzxumiXPWS0fi90TmauU_Rq-LkSC64mZIFqPw3WhSN7AjC_nlJ-rygm7xK9MqqsyB1RLIjlNX-vBnMwk0Dl_jpsj1Hr2HY_7UIlQtyRuIuS8X51gL-CCLVeR3Ip6WUwo6Zt4wZvM8CdQkHWXfJYis_jIHPlijtIYaejkV2IG7ngR7Ki8O7aLscylNx-QHMPYRIZdqS2RkATC3PZg59aPn7E5aNQqUc3aabWmniqU8tzKRZ9CVVaVr8zCG3JAjbP1O9hVvF3K3i8TYW8UR2nlU1SeMctut0LcBuZELxWy3XDk8YjRyQk8ANAHP1w1eKdtd4ydniGgivX0Tzym5epxHLWidL_vLWxHoEBauD1-uO2qvHjwTLuuXmav0bsZOKn8lHieXT20fI7xEhnkttQlGDjHpAzNxi5rwSpqqSmQjmWHRv32saPTVNJ1c1N4g159NEXB6-7X5Z4g3jG711U5T8qdOKkLvi-5aTdqfxC24IuopcMfCd5gSZiXL96v5xVWLUEX2dr05Od1HG-xpIyoJE5QqkdsSavQIOxltk6x16ZdoRKRTFZ_LRp3uOU1tClZUlMRKweCQgAvRcdbkJCSJurSL3wqi17D0R833PkvRDSuXJ2Ak6JGFR67pChm2r7xmXvwuPXYp8KoIKBGDGks2dGCas3Eafi9jHNd52BMW25i9_SFclvIUhDB6GxNXZ4V52MIBh_3rBwfTfLXHBMXaYbkkYENKUPrwDQDDaroQl4-RVyhR3w3XOOw")
+dropbox_token = os.environ.get("sl.u.AFo_SWgXgbhGHXYUAXO2bjHzsh9vdhzVIxXMNvvYZhFuaJeB99EXfBbaHfyN_Nhshm09pNkx4GUPaEDtDNU5AGsLmAmWpawp6uT7F2Nhp1wkJtSjpllPIS5dpJc4T-GMJqb8qKR5n-rKJMnoDyCnnMaZdNjPLyWn0wMII7-xDxqvHN7Ahn7bXNMuT3pfI0A2mqmmV3l5dqf1uLnee-PWPrjNZ7xEZqCqp0MG-G1zMJTEE13wKl6gRpizFA3CyJjNVHQOHBITE3GJzkID3PRSTZTH7sF8mIX-bY0W_hON2vVKAH0kUUUex697uRRvohkQQY5xES9AU9COWeoHLmL-zdySNjjy4RCNlFfoLGyMMUQkU4CgVwxarB-MhPIo90Pxhwg8mDiW50RcGJHeIak_5PcGfKmgOT19WsfNGblR8UeVOcMIUU_8Cy44JApoFlIacqKJoUQNuepPN8NN7WdswnJyJjqlJCWYNNAuDePe4FSjlGSsyTNsJmz_BpcFdxNdJbbuyHggm_J-k2zG-x-QQIFHe-V2jIQn7igaYMOamua7BeFjV0nGT0mU83TkHEh-hxAIiNx0AuU-snZftuDBGfFXwBWo-mgUrshVdu2OTxVefEwp0c2qAs9rWN3zOV0NjaX4YgNdgR0mVnlj-3a1TTccDYHiMsyYBcSwx7WzyMVhWVaq2SIMiYumQy_xE2j8Gw0OP6bIXnmM0KJxKnquwXzyDQbtNwcp9AlCPoTmkO5F3LvDMDi6-C8U60KyZs4g7C4aVVF7-2z1Azrwxw7YYUjax0GN-26ZGha8luR1j9wbfZvEOuGIWN33P2o5asmjxFeBo3PF2Qq-S_S-DELuSj0Ly2SMhZo-NsICN8WYQTCVpt0a6vqXwGuS74oY_5XPshqvk8z8S1z4I7O9-L8R-gfA3m4ezFaD-BwkveNK6Hg_eLS7MZtmps7tn_67uO81GTN4_nXLf06FFG6fRdNZ2ob_OM8Ul7L1hQKFrXRQY7RYdAubhSDrVXO2kfOqfIPCvzDVnGmeIJ5pHY0R9Mub9X_TmK3C20a2VZbUJm2ssKV0TEo9O5aic3AjZrtUp4n8LSb_bc5N9k94-2XS9XwSb-FCRoOlzmth5vWzqJSuFF1J--Lz_q44aOulMG9bdF0euGfx0Wf_RY5NAyUdk0877q7B5bIVYSYbikV3xXppmqh6XYzptemWxg59CR3MXRGaMT8a4XBVQQwdxMP0QPtNLbMz60eFGKxKAKvqFsTEHnGs3PupPJMUnTB67nsYjVb4b2l-Li_BU9XtgHtXiDdPT1P6npvi41NX3Yjz9p7F7pI1YTOcR6Ybr0OUbmOFvtEy7chCbF5euZSODSe6EfkWEkT9E1qR6vkeUeGmEqu_OqpZU9hHhFX15V6ytzYvM5GSBVFIDxAhDwEWFv6M4LmWGZZA8bwY67QZ6xp-r34YptmneA")  # Ensure this is set in your environment
+dbx = dropbox.Dropbox(dropbox_token)
 
 st.set_page_config(page_title="Word ↔ PDF Converter", layout="centered")
 st.title("📄 Word ↔ PDF Converter")
@@ -14,7 +15,6 @@ st.markdown("Upload your file and convert between DOCX and PDF formats.")
 # === Dropbox Upload Function ===
 def upload_to_dropbox(local_path, dropbox_path):
     try:
-        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
         with open(local_path, "rb") as f:
             dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
         shared_link = dbx.sharing_create_shared_link_with_settings(dropbox_path)
@@ -35,11 +35,11 @@ if uploaded_file:
         if conversion_type == "PDF (from DOCX)" and filename.endswith(".docx"):
             try:
                 output_file = filename.replace(".docx", ".pdf")
-                pypandoc.convert_file(filename, "pdf", outputfile=output_file)
+                convert(filename, output_file)
                 with open(output_file, "rb") as f:
                     st.success("Conversion successful!")
                     st.download_button("⬇️ Download PDF", f, file_name=output_file)
-                # Upload to Dropbox
+                # Dropbox
                 dropbox_link = upload_to_dropbox(output_file, f"/{output_file}")
                 st.markdown(f"[📥 Dropbox Link]({dropbox_link})")
             except Exception as e:
@@ -54,7 +54,7 @@ if uploaded_file:
                 with open(output_file, "rb") as f:
                     st.success("Conversion successful!")
                     st.download_button("⬇️ Download DOCX", f, file_name=output_file)
-                # Upload to Dropbox
+                # Dropbox
                 dropbox_link = upload_to_dropbox(output_file, f"/{output_file}")
                 st.markdown(f"[📥 Dropbox Link]({dropbox_link})")
             except Exception as e:
