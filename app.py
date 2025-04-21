@@ -7,10 +7,7 @@ import dropbox
 
 # === CONFIG ===
 dropbox_token = os.environ.get("DROPBOX_ACCESS_TOKEN")  # Ensure this is set in your environment
-if not dropbox_token or dropbox_token.strip() == "":
-    st.error("Dropbox token is missing or improperly formatted. Please check your environment variables.")
-else:
-    dbx = dropbox.Dropbox(dropbox_token.strip())
+dbx = dropbox.Dropbox(dropbox_token)
 
 st.set_page_config(page_title="Word ↔ PDF Converter", layout="centered")
 st.title("📄 Word ↔ PDF Converter")
@@ -23,22 +20,17 @@ def upload_to_dropbox(local_path, dropbox_path):
             dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
         shared_link = dbx.sharing_create_shared_link_with_settings(dropbox_path)
         return shared_link.url
-    except dropbox.exceptions.ApiError as api_error:
-        return f"API Error: {api_error}"
     except Exception as e:
         return f"Error uploading to Dropbox: {e}"
 
 # === DOCX to PDF Conversion (Linux-Compatible) ===
 def convert_docx_to_pdf(input_path, output_path):
-    try:
-        with open(input_path, "rb") as docx_file:
-            result = mammoth.convert_to_html(docx_file)
-            html = result.value
+    with open(input_path, "rb") as docx_file:
+        result = mammoth.convert_to_html(docx_file)
+        html = result.value
         with open("temp.html", "w", encoding="utf-8") as html_file:
             html_file.write(html)
         weasyprint.HTML("temp.html").write_pdf(output_path)
-    except Exception as e:
-        raise RuntimeError(f"Error during DOCX to PDF conversion: {e}")
 
 # === File Upload UI ===
 uploaded_file = st.file_uploader("Choose a DOCX or PDF file", type=["docx", "pdf"])
@@ -50,8 +42,8 @@ if uploaded_file:
         f.write(uploaded_file.read())
 
     if st.button("🔄 Convert"):
-        try:
-            if conversion_type == "PDF (from DOCX)" and filename.endswith(".docx"):
+        if conversion_type == "PDF (from DOCX)" and filename.endswith(".docx"):
+            try:
                 output_file = filename.replace(".docx", ".pdf")
                 convert_docx_to_pdf(filename, output_file)
                 with open(output_file, "rb") as f:
@@ -59,8 +51,11 @@ if uploaded_file:
                     st.download_button("⬇️ Download PDF", f, file_name=output_file)
                 dropbox_link = upload_to_dropbox(output_file, f"/{output_file}")
                 st.markdown(f"[📥 Dropbox Link]({dropbox_link})")
+            except Exception as e:
+                st.error(f"Conversion failed: {e}")
 
-            elif conversion_type == "DOCX (from PDF)" and filename.endswith(".pdf"):
+        elif conversion_type == "DOCX (from PDF)" and filename.endswith(".pdf"):
+            try:
                 output_file = filename.replace(".pdf", ".docx")
                 cv = Converter(filename)
                 cv.convert(output_file, start=0, end=None)
@@ -70,16 +65,15 @@ if uploaded_file:
                     st.download_button("⬇️ Download DOCX", f, file_name=output_file)
                 dropbox_link = upload_to_dropbox(output_file, f"/{output_file}")
                 st.markdown(f"[📥 Dropbox Link]({dropbox_link})")
+            except Exception as e:
+                st.error(f"Conversion failed: {e}")
+        else:
+            st.warning("Please upload the correct file type for the selected conversion.")
 
-            else:
-                st.warning("Please upload the correct file type for the selected conversion.")
-        except Exception as e:
-            st.error(f"Conversion failed: {e}")
-        finally:
-            # Clean up
-            if os.path.exists(filename):
-                os.remove(filename)
-            if 'output_file' in locals() and os.path.exists(output_file):
-                os.remove(output_file)
-            if os.path.exists("temp.html"):
-                os.remove("temp.html")
+    # Clean up
+    if os.path.exists(filename):
+        os.remove(filename)
+    if 'output_file' in locals() and os.path.exists(output_file):
+        os.remove(output_file)
+    if os.path.exists("temp.html"):
+        os.remove("temp.html")
